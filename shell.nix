@@ -4,8 +4,8 @@ let
 
   inherit (nixpkgs) pkgs;
 
-  f = { mkDerivation, base, haskell-generate, QuickCheck, stdenv
-      , tasty, tasty-quickcheck
+  f = { mkDerivation, base, haskell-generate, QuickCheck
+      , regex-posix, stdenv, tasty, tasty-quickcheck
       }:
       mkDerivation {
         pname = "ArbitraryHaskell";
@@ -13,7 +13,7 @@ let
         src = ./.;
         buildDepends = [ base ];
         testDepends = [
-          base haskell-generate QuickCheck tasty tasty-quickcheck
+          base haskell-generate QuickCheck regex-posix tasty tasty-quickcheck
         ];
         homepage = "http://chriswarbo.net/git/arbitrary-haskell";
         description = "Generate Arbitrary Strings of Haskell code";
