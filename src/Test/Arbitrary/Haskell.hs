@@ -9,6 +9,7 @@ import Debug.Trace
 import Control.Applicative
 import Data.Maybe
 import Language.Haskell.Generate
+import Language.Haskell.Generate.Expression
 import Test.QuickCheck
 
 -- | Haskell code
@@ -106,7 +107,10 @@ instance (ArbSize (ExpG a), ArbSize (ExpG b)) =>
           in  oneof [applyE left'  <$> arb m,
                      applyE right' <$> arb m]
 
-nil = undefined'  -- Prelude.[] seems to cause parse errors
+-- Using "Prelude.[]" (ie. nil) seems to cause parse errors
+-- Using "undefined'" on its own causes ambiguous Foldable errors on GHC 7.10
+-- By wrapping in "repeat", we restrict it lists; by taking 0, we implement nil
+nil = applyE2 take' 0 (applyE repeat' undefined')
 
 instance ArbSize (ExpG a) => ArbSize (ExpG [a]) where
   arb n | n < 0 = error ("arb " ++ show n ++ " :: Gen List")
