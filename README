@@ -1,0 +1,8 @@
+# Arbitrary Haskell #
+
+This Haskell library provides an instance of QuickCheck's `Arbitrary` typeclass,
+which produces `String`s of Haskell code.
+
+Specifically, we define `newtype Haskell = H String`, and give it an instance of
+`Arbitrary` which orchestrates the generation of well-typed Haskell expressions
+(using the `haskell-generate` library) then pretty-prints the results.
