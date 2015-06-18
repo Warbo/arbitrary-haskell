@@ -3,6 +3,8 @@ module Main where
 import Control.Exception (try, SomeException)
 import Data.List
 import System.Directory
+import System.Exit
+import System.Process
 import Test.QuickCheck
 import Test.QuickCheck.Monadic
 import Test.Tasty (defaultMain, testGroup)
@@ -26,9 +28,21 @@ cabalDirExists p = monadicIO $ cleanup $ do
   exists <- run (doesDirectoryExist dir)
   assert exists
 
+cabalFileExists p = monadicIO $ cleanup $ do
+  dir <- run (makeProject tmpDir p)
+  exists <- run (doesFileExist (dir ++ "/" ++ name p ++ ".cabal"))
+  assert exists
+
+cabalProjectValid p = monadicIO $ cleanup $ do
+  dir <- run (makeProject tmpDir p)
+  result <- run (cabal dir ["check"])
+  assert (result == ExitSuccess)
+
 cabalTests = testGroup "Cabal tests" [
-               testProperty "Cabal dir exists" cabalDirExists
-             ]
+    testProperty "Cabal dir exists"  cabalDirExists
+  , testProperty "Cabal file exists" cabalFileExists
+  , testProperty "Cabal project is valid" cabalProjectValid
+  ]
 
 -- Helpers
 
@@ -45,6 +59,12 @@ cleanup x = do run $ rmTmpDir
 
 sanitise :: FilePath -> FilePath
 sanitise = filter (`elem` alpha)
+
+cabal :: FilePath -> [String] -> IO ExitCode
+cabal d args = do (sin, sout, serr, p) <- createProcess (proc "cabal" args) {
+                                            cwd = Just d
+                                          }
+                  waitForProcess p
 
 cleanupInvariant = monadicIO $ do
   cleanup (return ())

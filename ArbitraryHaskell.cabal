@@ -39,3 +39,4 @@ test-suite test
                      , haskell-generate
                      , regex-posix
                      , directory
+                     , process
