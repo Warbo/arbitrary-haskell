@@ -1,5 +1,9 @@
 {-# LANGUAGE FlexibleInstances #-}
-module Test.Arbitrary.Cabal where
+module Test.Arbitrary.Cabal (Project(..)
+                            , Section(..)
+                            , alpha
+                            , makeProject
+                            ) where
 
 import Data.List
 import Data.Maybe
@@ -19,10 +23,8 @@ instance Arbitrary AlphaName where
 -- | A Cabal project
 data Project = P { name :: String
                  , version  :: [Int]
-                 , headers  :: [(String, String)]
-                 , library :: Maybe (Section LibraryType)
-                 , required :: [Section RequiredType]
-                 , optional :: [Section OptionalType]
+                 , headers  :: Section ()
+                 , sections :: [Section String]
                  }
 
 instance Show Project where
@@ -30,22 +32,23 @@ instance Show Project where
 
 instance Arbitrary Project where
   arbitrary = do
-    AN name'  <- arbitrary
-    version'  <- listOf1 arbitrary
-    library'  <- arbitrary
-    required' <- listOf1 arbitrary :: Gen [Section RequiredType]
-    optional' <- listOf  arbitrary :: Gen [Section OptionalType]
+    AN name' <- arbitrary
+    version' <- listOf1 arbitrary
+    library  <-         arbitrary :: Gen (Maybe (Section  LibraryType))
+    required <- listOf1 arbitrary :: Gen        [Section RequiredType]
+    optional <- listOf  arbitrary :: Gen        [Section OptionalType]
     AN user   <- arbitrary
     AN desc   <- arbitrary
     AN syn    <- arbitrary
-    let haveTest = not (null optional')
-        (required'', optional'') = dropDupes required' optional'
+    let (required', optional') = dropDupes required optional
+        haveTest = not (null optional')
+        sections' = renderSections (maybeToList library) ++
+                    renderSections required'             ++
+                    renderSections optional'
     return $ P { name     = name'
                , version  = map abs version'
-               , library  = library'
-               , required = required''
-               , optional = optional''
-               , headers  = [
+               , sections = sections'
+               , headers  = S () [
                    ("cabal-version", if haveTest then ">= 1.8"
                                                  else ">= 1.2")
                  , ("build-type", "Simple")
@@ -60,8 +63,8 @@ instance Arbitrary Project where
 
 data Section t = S t [(String, String)]
 
-instance Show t => Show (Section t) where
-  show (S t l) = unlines $ show t : map (indent . keyVal) l
+instance Show (Section String) where
+  show (S t l) = unlines $ t : map (indent . keyVal) l
 
 instance Arbitrary (Section RequiredType) where
   arbitrary = do
@@ -132,10 +135,9 @@ mkCabalFile :: Project -> String
 mkCabalFile p = unlines $ concat [
     ["name: "    ++ name p,
      "version: " ++ intercalate "." (map show (version p))]
-  , map keyVal (headers p)
-  , map show   (required p)
-  , map show   (maybeToList (library p))
-  , map show   (optional p)
+  , case headers p of
+         S _ kv -> map keyVal kv
+  , map show (sections p)
   ]
 
 -- | Remove any sections with duplicate names (preferring Required, of course!)
@@ -158,3 +160,9 @@ dropDupesOs names [] = []
 dropDupesOs names (o@(S (Test n) _):os) = if n `elem` names
                                              then     dropDupesOs    names  os
                                              else o : dropDupesOs (n:names) os
+
+renderSection :: Show a => Section a -> Section String
+renderSection (S x kvs) = S (show x) kvs
+
+renderSections :: Show a => [Section a] -> [Section String]
+renderSections = map renderSection
