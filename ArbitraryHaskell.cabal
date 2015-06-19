@@ -19,7 +19,7 @@ cabal-version:       >=1.10
 library
   exposed-modules:     Test.Arbitrary.Haskell
                      , Test.Arbitrary.Cabal
-  -- other-modules:       
+  other-modules:       Test.Arbitrary.Internal.Cabal
   other-extensions:    FlexibleInstances, FlexibleContexts, ExistentialQuantification, DataKinds, KindSignatures, GADTs, TypeFamilies, MultiParamTypeClasses, FunctionalDependencies, UndecidableInstances
   build-depends:       base >=4.8 && <4.9
                      , QuickCheck
