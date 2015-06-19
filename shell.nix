@@ -16,6 +16,7 @@ let
           base directory haskell-generate process QuickCheck regex-posix
           tasty tasty-quickcheck
         ];
+        doCheck = false;
         homepage = "http://chriswarbo.net/git/arbitrary-haskell";
         description = "Generate Arbitrary Strings of Haskell code";
         license = stdenv.lib.licenses.publicDomain;
