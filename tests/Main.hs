@@ -58,6 +58,17 @@ dedupedSectionsUnique rs os = nameCount == sectionCount
 cabalSectionsUnique p = length (sections p) == length unique
   where unique = nub (map getName (sections p))
 
+cabalFilesAreWritten p = monadicIO $ cleanup $ do
+  dir <- run (makeProject tmpDir p)
+  found <- run $ filesIn dir
+  run (print found)
+  assert (files p `allIn` found)
+  where allIn []                ys = True
+        allIn (((ds, f), _):xs) ys = intercalate "/" ([""] ++ ds ++ [f]) `elem` ys &&
+                                     xs `allIn` ys
+        filesIn dir = do out <- readProcess "find" [dir] ""
+                         return . map (drop (length dir)) . lines $ out
+
 cabalTests = testGroup "Cabal tests" [
     testProperty "Cabal dir exists"  cabalDirExists
   , testProperty "Cabal file exists" cabalFileExists
@@ -67,6 +78,7 @@ cabalTests = testGroup "Cabal tests" [
   , testProperty "Deduped Optional sections are unique" optionalSectionsUnique
   , testProperty "Section names are unique" dedupedSectionsUnique
   , testProperty "Cabal section names are unique" cabalSectionsUnique
+  , testProperty "Files are written" cabalFilesAreWritten
   ]
 
 -- Helpers

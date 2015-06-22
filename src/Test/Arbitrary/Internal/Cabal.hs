@@ -7,6 +7,7 @@ module Test.Arbitrary.Internal.Cabal where
 import Data.List
 import Data.Maybe
 import System.Directory
+import Test.Arbitrary.Haskell
 import Test.QuickCheck
 
 -- | Alphabetic strings
@@ -15,15 +16,25 @@ newtype AlphaName = AN String deriving (Show)
 instance Arbitrary AlphaName where
   arbitrary = fmap AN (listOf1 (elements alpha))
 
+upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+lower = "abcdefghijklmnopqrstuvwxyz"
+alpha = upper ++ lower
+
+capitalised :: Gen String
+capitalised = do init <- elements upper
+                 rest <- listOf (elements alpha)
+                 return (init : take 10 rest)
+
 -- | A Cabal project
 data Project = P { name :: String
                  , version  :: [Int]
                  , headers  :: Section ()
                  , sections :: [Section String]
+                 , files :: [(File, Haskell)]
                  }
 
 instance Show Project where
-  show = mkCabalFile
+  show p = mkCabalFile p ++ "\n" ++ show (files p)
 
 instance Arbitrary Project where
   arbitrary = do
@@ -35,11 +46,14 @@ instance Arbitrary Project where
     AN user   <- arbitrary
     AN desc   <- arbitrary
     AN syn    <- arbitrary
+    files'    <- listOf genHsFile
     let (required', optional') = dropDupes required optional
-        haveTest  = not (null optional')
-        sections' = renderSections (maybeToList library) ++
-                    renderSections required'             ++
-                    renderSections optional'
+        -- Cabal rejects tests with the same name as the package
+        optional'' = filter (\(S (Test n) _) -> n /= name') optional'
+        haveTest   = not (null optional'')
+        sections'  = renderSections (maybeToList library) ++
+                     renderSections required'             ++
+                     renderSections optional''
     return $ P { name     = name'
                , version  = map abs version'
                , sections = sections'
@@ -54,7 +68,20 @@ instance Arbitrary Project where
                  , ("license", "GPL")
                  , ("license-file", "LICENSE")
                  ]
+               , files = files'
                }
+
+type File = ([FilePath], FilePath) -- Directories and filename
+
+genFile :: Gen File
+genFile = do dirs <- listOf capitalised
+             name <- capitalised
+             return (dirs, name)
+
+genHsFile :: Gen (File, Haskell)
+genHsFile = do code <- arbitrary
+               file <- genFile
+               return (file, code)
 
 data Section t = S t [(String, String)]
 
@@ -132,7 +159,13 @@ makeProject d p = let path = d ++ "/" ++ name p in do
   writeFile (path ++ ("/" ++ name p ++ ".cabal")) (mkCabalFile p)
   writeFile (path ++ "/LICENSE")  ""
   writeFile (path ++ "/Setup.hs") ""
+  mapM_ (mkFiles path) (files p)
   return path
+
+mkFiles path ((dirs, file), H src) = do
+  let dir = intercalate "/" (path:dirs)
+  createDirectoryIfMissing True dir
+  writeFile (dir ++ "/" ++ file) src
 
 mkCabalFile :: Project -> String
 mkCabalFile p = unlines $ concat [
@@ -148,10 +181,6 @@ renderSection (S x kvs) = S (show x) kvs
 
 renderSections :: Show a => [Section a] -> [Section String]
 renderSections = map renderSection
-
-upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-lower = "abcdefghijklmnopqrstuvwxyz"
-alpha = upper ++ lower
 
 -- | Remove any sections with duplicate names (preferring Required, of course!)
 dropDupes :: [Section RequiredType] ->
