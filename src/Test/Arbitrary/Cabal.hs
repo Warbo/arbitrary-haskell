@@ -1,4 +1,4 @@
-module Test.Arbitrary.Cabal (Project(..)
+module Test.Arbitrary.Cabal ( Project(..)
                             , Section(..)
                             , makeProject
                             ) where
