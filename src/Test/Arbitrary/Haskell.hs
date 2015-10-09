@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleInstances, FlexibleContexts, ExistentialQuantification #-}
-{-# LANGUAGE DataKinds, KindSignatures, GADTs, TypeFamilies #-}
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies #-}
+{-# LANGUAGE DataKinds, GADTs, TypeFamilies #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Test.Arbitrary.Haskell where
@@ -21,7 +21,7 @@ newtype Haskell = H String deriving Show
 
 -- | Generate a Haskell module, render it to a String then wrap in 'H'
 instance Arbitrary Haskell where
-  arbitrary = do fmap (H . show) (arbitrary :: Gen ModuleG)
+  arbitrary = fmap (H . show) (arbitrary :: Gen ModuleG)
 
 -- A module contains any number of definitions, each with a name and a body.
 -- We only generate Main modules, to keep GHC happy.
@@ -115,8 +115,7 @@ nil = applyE2 take' 0 (applyE repeat' undefined')
 instance ArbSize (ExpG a) => ArbSize (ExpG [a]) where
   arb n | n < 0 = error ("arb " ++ show n ++ " :: Gen List")
   arb 0 = return nil
-  arb n = let collate []     = nil
-              collate (x:xs) = applyE2 cons x (collate xs)
+  arb n = let collate = foldr (applyE2 cons) nil
           in  collate <$> divBet (n - 1)
 
 instance (ArbSize (ExpG a), ArbSize (ExpG b)) =>
@@ -182,7 +181,7 @@ mkMaybeExport (n:ns) = do
   let body' = tToE body
   specs <- mkMaybeExport ns
   keep  <- arbitrary
-  return ((++) <$> (body' keep n) <*> specs)
+  return ((++) <$> body' keep n <*> specs)
 
 mkMain :: ExpG (IO ()) -> ModuleG -> ModuleG
 mkMain body x = do x'  <- fromMaybe [] <$> x
@@ -194,7 +193,7 @@ genName = do c  <- choose ('a', 'z')
              cs <- listOf $ oneof [choose ('a', 'z'),
                                    choose ('A', 'Z'),
                                    choose ('0', '9'),
-                                   elements ['_', '\'']]
+                                   elements "_'"]
              return (c:cs)
 
 divBet :: ArbSize a => Int -> Gen [a]

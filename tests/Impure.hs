@@ -18,15 +18,16 @@ import Text.Regex.Posix
 withOptions = localOption (QuickCheckTests 10)
 
 main = do cabal <- haveCabal
-          defaultMain $ withOptions $ testGroup "Impure tests" ([
-              hsTests
-            ] ++ if cabal then [cabalTests] else [])
+          let tests = if cabal then allTests else hsTests
+          defaultMain $ withOptions tests
 
-hsTests = testGroup "Haskell tests" [
+allTests = testGroup "All impure tests" [hsTests, cabalTests]
+
+hsTests = testGroup "Impure Haskell tests" [
             testProperty "Only Main modules are generated" moduleIsMain
           ]
 
-cabalTests = testGroup "Cabal tests" [
+cabalTests = testGroup "Impure Cabal tests" [
     testProperty "Cabal dir exists"  cabalDirExists
   , testProperty "Cabal file exists" cabalFileExists
   , testProperty "Cabal project is valid" cabalProjectValid

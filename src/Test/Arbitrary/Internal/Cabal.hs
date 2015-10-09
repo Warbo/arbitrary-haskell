@@ -54,22 +54,22 @@ instance Arbitrary Project where
         sections'  = renderSections (maybeToList library) ++
                      renderSections required'             ++
                      renderSections optional''
-    return $ P { name     = name'
-               , version  = map abs version'
-               , sections = sections'
-               , headers  = S () [
-                   ("cabal-version", if haveTest then ">= 1.8"
-                                                 else ">= 1.2")
-                 , ("build-type", "Simple")
-                 , ("category", "Language")
-                 , ("maintainer", user ++ "@example.com")
-                 , ("description", desc)
-                 , ("synopsis", take 79 syn)
-                 , ("license", "GPL")
-                 , ("license-file", "LICENSE")
-                 ]
-               , files = files'
-               }
+    return P { name     = name'
+             , version  = map abs version'
+             , sections = sections'
+             , headers  = S () [
+               ("cabal-version", if haveTest then ">= 1.8"
+                                             else ">= 1.2")
+               , ("build-type", "Simple")
+               , ("category", "Language")
+               , ("maintainer", user ++ "@example.com")
+               , ("description", desc)
+               , ("synopsis", take 79 syn)
+               , ("license", "GPL")
+               , ("license-file", "LICENSE")
+               ]
+             , files = files'
+             }
 
 type File = ([FilePath], FilePath) -- Directories and filename
 

@@ -1,4 +1,4 @@
-{ nixpkgs ? import <nixpkgs> {}, compiler ? "ghc7101" }:
+{ nixpkgs ? import <nixpkgs> {}, compiler ? "default" }:
 
 let
 
@@ -12,8 +12,10 @@ let
         pname = "ArbitraryHaskell";
         version = "0.1.0.0";
         src = ./.;
-        buildDepends = [ base directory haskell-generate QuickCheck ];
-        testDepends = [
+        libraryHaskellDepends = [
+          base directory haskell-generate QuickCheck
+        ];
+        testHaskellDepends = [
           base directory haskell-generate process QuickCheck regex-posix
           tasty tasty-quickcheck temporary
         ];
@@ -22,7 +24,11 @@ let
         license = stdenv.lib.licenses.publicDomain;
       };
 
-  drv = pkgs.haskell.packages.${compiler}.callPackage f {};
+  haskellPackages = if compiler == "default"
+                      then pkgs.haskellPackages
+                      else pkgs.haskell.packages.${compiler};
+
+  drv = haskellPackages.callPackage f {};
 
 in
 

@@ -6,8 +6,10 @@ mkDerivation {
   pname = "ArbitraryHaskell";
   version = "0.1.0.0";
   src = ./.;
-  buildDepends = [ base directory haskell-generate QuickCheck ];
-  testDepends = [
+  libraryHaskellDepends = [
+    base directory haskell-generate QuickCheck
+  ];
+  testHaskellDepends = [
     base directory haskell-generate process QuickCheck regex-posix
     tasty tasty-quickcheck temporary
   ];
