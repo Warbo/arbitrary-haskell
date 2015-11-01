@@ -1,4 +1,4 @@
-module Main where
+module Impure where
 
 import Control.Exception (try, SomeException)
 import Data.Either
@@ -17,9 +17,9 @@ import Text.Regex.Posix
 
 withOptions = localOption (QuickCheckTests 10)
 
-main = do cabal <- haveCabal
-          let tests = if cabal then allTests else hsTests
-          defaultMain $ withOptions tests
+tests = do cabal <- haveCabal
+           let tests = if cabal then allTests else hsTests
+           return (withOptions tests)
 
 allTests = testGroup "All impure tests" [hsTests, cabalTests]
 

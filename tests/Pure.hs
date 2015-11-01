@@ -1,4 +1,4 @@
-module Main where
+module Pure where
 
 import Data.List
 import Test.QuickCheck
@@ -34,6 +34,4 @@ cabalTests = testGroup "Cabal tests" [
   , testProperty "Cabal section names are unique" cabalSectionsUnique
   ]
 
-main = defaultMain $ testGroup "Pure tests" [
-    cabalTests
-  ]
+tests = testGroup "Pure tests" [cabalTests]

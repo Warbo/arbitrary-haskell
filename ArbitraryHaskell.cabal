@@ -28,25 +28,11 @@ library
   hs-source-dirs:      src
   default-language:    Haskell2010
 
-test-suite pure
+test-suite tests
   default-language:    Haskell2010
   type:                exitcode-stdio-1.0
   hs-source-dirs:      tests, src
-  main-is:             Pure.hs
-  build-depends:       base >= 4.7
-                     , QuickCheck
-                     , tasty >= 0.7
-                     , tasty-quickcheck
-                     , haskell-generate
-                     , regex-posix
-                     , directory
-                     , process
-
-test-suite impure
-  default-language:    Haskell2010
-  type:                exitcode-stdio-1.0
-  hs-source-dirs:      tests, src
-  main-is:             Impure.hs
+  main-is:             Tests.hs
   build-depends:       base >= 4.7
                      , QuickCheck
                      , tasty >= 0.7
