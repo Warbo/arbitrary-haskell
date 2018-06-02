@@ -121,7 +121,7 @@ instance Arbitrary (Section OptionalType) where
                                               ])
                  return (S t (("type", typ) : kvs))
 
-data RequiredType = Exec String
+newtype RequiredType = Exec String
 
 instance Show RequiredType where
   show (Exec e) = "executable " ++ e
@@ -138,7 +138,7 @@ instance Show LibraryType where
 instance Arbitrary LibraryType where
   arbitrary = return Lib
 
-data OptionalType = Test String
+newtype OptionalType = Test String
 
 instance Show OptionalType where
   show (Test t) = "test-suite " ++ t
