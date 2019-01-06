@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                ArbitraryHaskell
-version:             0.2.0.0
+version:             0.2.1.0
 synopsis:            Generate Arbitrary Strings of Haskell code
 -- description:         
 homepage:            http://chriswarbo.net/git/arbitrary-haskell
