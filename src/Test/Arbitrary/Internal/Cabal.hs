@@ -20,6 +20,16 @@ upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 lower = "abcdefghijklmnopqrstuvwxyz"
 alpha = upper ++ lower
 
+newtype Module = M String
+
+instance Arbitrary Module where
+  arbitrary = do x  <- elements upper
+                 xs <- listOf (elements alpha)
+                 pure (M (x:xs))
+
+instance Show Module where
+  show (M x) = x
+
 capitalised :: Gen String
 capitalised = do init <- elements upper
                  rest <- listOf (elements alpha)
@@ -58,13 +68,16 @@ instance Arbitrary Project where
              , version  = map abs version'
              , sections = sections'
              , headers  = S () [
-               ("cabal-version", if haveTest then ">= 1.8"
-                                             else ">= 1.2")
+                 ("cabal-version", if haveTest then ">= 1.8"
+                                               else ">= 1.2")
                , ("build-type", "Simple")
                , ("category", "Language")
                , ("maintainer", user ++ "@example.com")
-               , ("description", desc)
+
+               -- Description needs to be longer than synopsis
+               , ("description", syn ++ desc)
                , ("synopsis", take 79 syn)
+
                , ("license", "GPL")
                , ("license-file", "LICENSE")
                ]
@@ -104,8 +117,11 @@ instance Arbitrary (Section RequiredType) where
                   return (S t [("main-is", m ++ ".hs")])
 
 instance Arbitrary (Section LibraryType) where
-  arbitrary = do t <- arbitrary
-                 return (S t [])
+  -- Cabal requires library sections to have exposed-modules
+  arbitrary = do t  <- arbitrary
+                 ms <- listOf1 (arbitrary :: Gen Module)
+                 return (S t [("exposed-modules",
+                               intercalate ", " (map show ms))])
 
 instance Arbitrary (Section OptionalType) where
   arbitrary = do t <- arbitrary
@@ -136,7 +152,7 @@ instance Show LibraryType where
   show Lib = "library"
 
 instance Arbitrary LibraryType where
-  arbitrary = return Lib
+  arbitrary = pure Lib
 
 newtype OptionalType = Test String
 
