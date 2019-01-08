@@ -34,8 +34,7 @@ instance Arbitrary ModuleG where
     (names, mods) <- runGenerate . mapM newName . take n <$> listOf genName
 
     -- Generate bodies for the names
-    specs <- do specs <- mkMaybeExport names
-                return (fmap Just specs)
+    specs <- fmap Just <$> mkMaybeExport names
 
     -- Generate a "main" value (to appease GHC)
     main <- arbitrary
